@@ -1,5 +1,5 @@
 import pygame
-
+import random
 ### will initialize the screen 
 pygame.init()
 
@@ -17,6 +17,7 @@ light_green = (0, 255, 0)
 yellow = (200, 200, 0)
 light_yellow = (255, 255, 0)
 
+###Display Parameter
 DisplayWidth = 800
 DisplayHeight = 600
 
@@ -48,6 +49,13 @@ FPS = 20    ## frame per second
 SmallFont = pygame.font.SysFont("comicsansms", 25)
 MedFont = pygame.font.SysFont("comicsansms", 50)
 LargeFont = pygame.font.SysFont("comicsansms", 80)
+
+###defining barrier
+def barrier(BarrierX, BarrierHeight, BarrierWidth):
+
+    pygame.draw.rect(GameDisplay, black, [BarrierX, DisplayHeight-BarrierHeight, BarrierWidth, BarrierHeight])
+
+
 
 ### drawing tank
 def tank(x, y, TurrepPos):
@@ -86,6 +94,9 @@ def GameLoop():
     TankMove = 0
     TurrepPos = 0
     CurrentTurrep = 0
+    BarrierWidth = 50
+    BarrierX = (DisplayWidth / 2) + random.randint(-0.2 * DisplayWidth, 0.2 * DisplayWidth)
+    BarrierHeight = random.randrange(DisplayHeight * 0.1, DisplayHeight * 0.6)
 
     while not GameExit:
         if GameOver == True:
@@ -135,12 +146,24 @@ def GameLoop():
 
         GameDisplay.fill(white)
         TankX += TankMove
+
         CurrentTurrep += TurrepPos
+
+        ### as turreplist only has 8 rotations
         if CurrentTurrep > 8:
             CurrentTurrep = 8
         elif CurrentTurrep < 0:
             CurrentTurrep = 0
+
+        ### if this is the case then from upper side tank will move 5 unit left and from this case it will move 5 unit right, means cancel out (tank will look stable) 
+        if TankX - (TankWidth/2) < BarrierX + BarrierWidth:
+            TankX += 5
+
         tank(TankX, TankY, CurrentTurrep)
+        barrier(BarrierX, BarrierHeight, BarrierWidth)
+
+
+
 
 
         ### will update the whole display screen
