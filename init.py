@@ -20,6 +20,14 @@ light_yellow = (255, 255, 0)
 DisplayWidth = 800
 DisplayHeight = 600
 
+### Tank Parameter
+TankX = int(DisplayWidth * 0.9)
+TankY = int(DisplayHeight*0.9)
+TankWidth = 40
+TankHeight = 20
+WheelWidth = 5
+TurretWidth = 5
+
 ### will give length and width to the screen
 GameDisplay = pygame.display.set_mode((DisplayWidth, DisplayHeight))
 
@@ -43,6 +51,21 @@ SmallFont = pygame.font.SysFont("comicsansms", 25)
 MedFont = pygame.font.SysFont("comicsansms", 50)
 LargeFont = pygame.font.SysFont("comicsansms", 80)
 
+### drawing tank
+def tank(x, y):
+    pygame.draw.circle(GameDisplay, black, (x, y), int(TankHeight/2))
+    pygame.draw.rect(GameDisplay, black, (x-TankHeight, y, TankWidth, TankHeight))
+    pygame.draw.line(GameDisplay, black, (x, y), (x-10, y-20), TurretWidth)
+    
+    pygame.draw.circle(GameDisplay, black, (x-15, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x-10, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x-5, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+5, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+10, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
+    
 
 ### looping all events
 def GameLoop():
@@ -89,6 +112,9 @@ def GameLoop():
 					pause()
 
 		GameDisplay.fill(white)
+		tank(TankX, TankY)
+
+
 		### will update the whole display screen
 		pygame.display.update()
 
@@ -101,6 +127,31 @@ def GameLoop():
 	### quitting from program
 	quit()
 
+### control screen of game
+def GameControl():
+	cntrl = True
+
+	while cntrl:
+
+		### events(Press c to enter or q to exit) and direct exit x
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+
+		GameDisplay.fill(white)
+		message_to_screen("Game Controls !!", red, -100, "medium")
+		message_to_screen("Fire: Spacebar ", black, -60)
+		message_to_screen("Move Tanker: left, right  ", black, -20)
+		message_to_screen("Move Turret: up, down", black, 20)
+		message_to_screen("pause: press p", blue, 60)
+
+		button("Play", 150, 500, 100, 50, green, light_green, action= "play")
+		#button("Controls", 350, 500, 100, 50, yellow, light_yellow, action= "controls")
+		button("Quit", 550, 500, 100, 50, red, light_red, action= "quit")
+		pygame.display.update()
+		clock.tick(15)
+
 ### function is used to get surface and inside rectangle of the whole text
 def text_objects(text, color, FontSize):
 	if FontSize == "small":
@@ -111,11 +162,13 @@ def text_objects(text, color, FontSize):
 		TextSurface = LargeFont.render(text, True, color)		
 	return TextSurface, TextSurface.get_rect()
 
+### defining text on buttons
 def text_button(msg, color, buttonX, buttonY, bWidth, bHeight, size = "small"):
 	TextSurface, TextRect = text_objects(msg, color, size)
 	TextRect.center = (buttonX + (bWidth/2)), (buttonY + (bHeight/2))
 	GameDisplay.blit(TextSurface, TextRect)
 
+### defining buttons
 def button(msg, buttonX, buttonY, bWidth, bHeight, inactive_color, active_color, action = None):
 	cur = pygame.mouse.get_pos()
 	click = pygame.mouse.get_pressed()
@@ -125,7 +178,7 @@ def button(msg, buttonX, buttonY, bWidth, bHeight, inactive_color, active_color,
 			if action == "play":
 				GameLoop()
 			if action == "controls":
-				pass
+				GameControl()
 			if action == "quit":
 				pygame.quit()
 				quit()
@@ -133,6 +186,7 @@ def button(msg, buttonX, buttonY, bWidth, bHeight, inactive_color, active_color,
 		pygame.draw.rect(GameDisplay, inactive_color, (buttonX, buttonY, bWidth, bHeight))
 
 	text_button(msg, black, buttonX, buttonY, bWidth, bHeight)
+
 ### message that needs to be printed on screen
 def message_to_screen(msg, color, y_displace = 0, FontSize = "small"):
 	TextSurface, TextRect = text_objects(msg, color, FontSize)
