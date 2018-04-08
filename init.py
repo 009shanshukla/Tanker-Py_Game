@@ -21,8 +21,6 @@ DisplayWidth = 800
 DisplayHeight = 600
 
 ### Tank Parameter
-TankX = int(DisplayWidth * 0.9)
-TankY = int(DisplayHeight*0.9)
 TankWidth = 40
 TankHeight = 20
 WheelWidth = 5
@@ -52,10 +50,21 @@ MedFont = pygame.font.SysFont("comicsansms", 50)
 LargeFont = pygame.font.SysFont("comicsansms", 80)
 
 ### drawing tank
-def tank(x, y):
+def tank(x, y, TurrepPos):
+    TurrepList = [
+        (x-27, y-2),
+        (x-26, y-5),
+        (x - 25, y - 8),
+        (x - 23, y - 12),
+        (x - 20, y - 14),
+        (x - 18, y - 15),
+        (x - 15, y - 17),
+        (x - 13, y - 19),
+        (x - 11, y - 21)
+    ]
     pygame.draw.circle(GameDisplay, black, (x, y), int(TankHeight/2))
     pygame.draw.rect(GameDisplay, black, (x-TankHeight, y, TankWidth, TankHeight))
-    pygame.draw.line(GameDisplay, black, (x, y), (x-10, y-20), TurretWidth)
+    pygame.draw.line(GameDisplay, black, (x, y), TurrepList[TurrepPos], TurretWidth)
     
     pygame.draw.circle(GameDisplay, black, (x-15, y+20), WheelWidth)
     pygame.draw.circle(GameDisplay, black, (x-10, y+20), WheelWidth)
@@ -69,63 +78,89 @@ def tank(x, y):
 
 ### looping all events
 def GameLoop():
-	### Game variables
-	GameExit = False
-	GameOver = False
+    ### Game variables
+    GameExit = False
+    GameOver = False
+    TankX = int(DisplayWidth*0.9)
+    TankY = int(DisplayHeight*0.9)
+    TankMove = 0
+    TurrepPos = 0
+    CurrentTurrep = 0
 
-	while not GameExit:
-		if GameOver == True:
-			message_to_screen("Game Over", red, -50,
-							  FontSize="large")  ### -50 is telling y-displacement from the centre of text
-			message_to_screen("Press c to continue or q to quit", black, 50, FontSize="small")
-			pygame.display.update()
+    while not GameExit:
+        if GameOver == True:
+            message_to_screen("Game Over", red, -50,
+                              FontSize="large")  ### -50 is telling y-displacement from the centre of text
+            message_to_screen("Press c to continue or q to quit", black, 50, FontSize="small")
+            pygame.display.update()
 
-		while GameOver == True:
-			### if c ,q our quit is pressed
-			for event in pygame.event.get():
-				if event.type == pygame.QUIT:
-					GameExit = True
-					GameOver = False
-				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_q:
-						GameExit = True
-						GameOver = False
-					if event.key == pygame.K_c:
-						GameLoop()
+        while GameOver == True:
+            ### if c ,q our quit is pressed
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    GameExit = True
+                    GameOver = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        GameExit = True
+                        GameOver = False
+                    if event.key == pygame.K_c:
+                        GameLoop()
 
-		### if one of arrow keys or quit is pressed
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				GameExit = True
+        ### if one of arrow keys or quit is pressed
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                GameExit = True
 
-			### if an arrow key is pressed
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_LEFT:
-					pass
-				elif event.key == pygame.K_RIGHT:
-					pass
-				elif event.key == pygame.K_UP:
-					pass
-				elif event.key == pygame.K_DOWN:
-					pass
-				elif event.key == pygame.K_p:
-					pause()
+            ### if an arrow key is pressed
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    TankMove = -5
+                elif event.key == pygame.K_RIGHT:
+                    TankMove = 5
+                elif event.key == pygame.K_UP:
+                    TurrepPos = 1
+                elif event.key == pygame.K_DOWN:
+                    TurrepPos = -1
+                elif event.key == pygame.K_p:
+                    pause()
 
-		GameDisplay.fill(white)
-		tank(TankX, TankY)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    TankMove = 0
+                if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                     TurrepPos = 0
 
 
-		### will update the whole display screen
-		pygame.display.update()
 
-		### give freeze time frame per seconds
-		clock.tick(FPS)
+        GameDisplay.fill(white)
+        TankX += TankMove
+        CurrentTurrep += TurrepPos
+        if CurrentTurrep > 8:
+            CurrentTurrep = 8
+        elif CurrentTurrep < 0:
+            CurrentTurrep = 0
+        tank(TankX, TankY, CurrentTurrep)
 
-	### quitting from pygame
-	pygame.quit()
 
-	### quitting from program
-	quit()
+        ### will update the whole display screen
+        pygame.display.update()
+
+        ### give freeze time frame per seconds
+        clock.tick(FPS)
+
+    ### quitting from pygame
+    pygame.quit()
+
+    ### quitting from program
+    quit()
+
+
+
+
+
+
+
 
 ### control screen of game
 def GameControl():
