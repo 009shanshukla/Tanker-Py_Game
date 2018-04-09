@@ -82,7 +82,35 @@ def tank(x, y, TurrepPos):
     pygame.draw.circle(GameDisplay, black, (x+10, y+20), WheelWidth)
     pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
     pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
+
+    return TurrepList[TurrepPos]
     
+###firing
+def fireshell(xy, TankX, TankY, CurrentPos):
+    fire = True
+    StartingShell = list(xy)
+
+    while fire:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+        print(StartingShell[0], StartingShell[1])
+        pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
+
+        ### equation to find y and x moving co-ordinate of firing
+        StartingShell[0] -= (12 - CurrentPos)*2
+        StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015)**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
+
+
+        if StartingShell[1] > DisplayHeight:
+            fire = False
+        pygame.display.update()
+        clock.tick(100)
+
+
+
 
 ### looping all events
 def GameLoop():
@@ -99,6 +127,8 @@ def GameLoop():
     BarrierHeight = random.randrange(DisplayHeight * 0.1, DisplayHeight * 0.6)
 
     while not GameExit:
+        GameDisplay.fill(white)
+        Gunpos = tank(TankX, TankY, CurrentTurrep)
         if GameOver == True:
             message_to_screen("Game Over", red, -50,
                               FontSize="large")  ### -50 is telling y-displacement from the centre of text
@@ -136,6 +166,8 @@ def GameLoop():
                 elif event.key == pygame.K_p:
                     pause()
 
+                elif event.key == pygame.K_SPACE:
+                    fireshell(Gunpos, TankX, TankY, CurrentTurrep)
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     TankMove = 0
@@ -144,7 +176,7 @@ def GameLoop():
 
 
 
-        GameDisplay.fill(white)
+
         TankX += TankMove
 
         CurrentTurrep += TurrepPos
@@ -159,7 +191,7 @@ def GameLoop():
         if TankX - (TankWidth/2) < BarrierX + BarrierWidth:
             TankX += 5
 
-        tank(TankX, TankY, CurrentTurrep)
+
         barrier(BarrierX, BarrierHeight, BarrierWidth)
 
 
