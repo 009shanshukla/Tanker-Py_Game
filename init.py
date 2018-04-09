@@ -20,6 +20,7 @@ light_yellow = (255, 255, 0)
 ###Display Parameter
 DisplayWidth = 800
 DisplayHeight = 600
+GroundHeight = 35
 
 ### Tank Parameter
 TankWidth = 40
@@ -52,9 +53,10 @@ LargeFont = pygame.font.SysFont("comicsansms", 80)
 
 ###defining barrier
 def barrier(BarrierX, BarrierHeight, BarrierWidth):
-
     pygame.draw.rect(GameDisplay, black, [BarrierX, DisplayHeight-BarrierHeight, BarrierWidth, BarrierHeight])
 
+
+###defing explosion when hit something
 def explosion(x, y, size = 50):
     explode = True
 
@@ -63,14 +65,20 @@ def explosion(x, y, size = 50):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+                
         StartPoint = x, y
         ColorChoices = [yellow, green, light_green, red, light_red]
         magnitude = 1
+
+        ### Blit 50 times on different types within a range randomly 
         while magnitude < size:
-            ExplodingBlitX = x + random.randrange(-1*magnitude, magnitude)
+            
+            ExplodingBlitX = x + random.randrange(-1*magnitude, magnitude)  
             ExplodingBlitY = y + random.randrange(-1*magnitude, magnitude)
+            
             pygame.draw.circle(GameDisplay, ColorChoices[random.randrange(0,5)], (ExplodingBlitX, ExplodingBlitY),random.randrange(1,5))
             magnitude += 1
+            
             pygame.display.update()
             clock.tick(100)
 
@@ -80,6 +88,8 @@ def explosion(x, y, size = 50):
 
 ### drawing tank
 def tank(x, y, TurrepPos):
+
+    ### 1st co-ordinate of turrep point (2nd will be (x, y)(tank upper circle)) and for rotation there will be 9 co-ordinates are available
     TurrepList = [
         (x-27, y-2),
         (x-26, y-5),
@@ -91,10 +101,13 @@ def tank(x, y, TurrepPos):
         (x - 13, y - 19),
         (x - 11, y - 21)
     ]
+    ### draw upper circle of tank
     pygame.draw.circle(GameDisplay, black, (x, y), int(TankHeight/2))
+    ### draw rectangle of tank
     pygame.draw.rect(GameDisplay, black, (x-TankHeight, y, TankWidth, TankHeight))
+    ### draw turrep of tank
     pygame.draw.line(GameDisplay, black, (x, y), TurrepList[TurrepPos], TurretWidth)
-    
+    ### draw 8 wheels of tank
     pygame.draw.circle(GameDisplay, black, (x-15, y+20), WheelWidth)
     pygame.draw.circle(GameDisplay, black, (x-10, y+20), WheelWidth)
     pygame.draw.circle(GameDisplay, black, (x-5, y+20), WheelWidth)
@@ -105,45 +118,53 @@ def tank(x, y, TurrepPos):
     pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
 
     return TurrepList[TurrepPos]
+
+
     
 ###firing
 def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth):
     fire = True
     StartingShell = list(xy)
 
+    ### keep firing until not hit something     
     while fire:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
 
+        ###drawing fire 
         pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
 
         ### equation to find y and x moving co-ordinate of firing
         StartingShell[0] -= (12 - CurrentPos)*2
         StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(GunPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
 
-
-        if StartingShell[1] > DisplayHeight:
-            HitX = int((StartingShell[0]*DisplayHeight)/StartingShell[1])
-            HitY = int(DisplayHeight)
+        ### if fire hit the ground 
+        if StartingShell[1] > DisplayHeight-GroundHeight:
+            HitX = int((StartingShell[0]*DisplayHeight-GroundHeight)/StartingShell[1])
+            HitY = int(DisplayHeight-GroundHeight)
             explosion(HitX, HitY)
             fire = False
 
+        ### this condition will check if fire crosses the right of barrier
         CheckX1 = StartingShell[0] <= BarrierX + BarrierWidth
+        ### this condition will check if fire is behind left of barrier          -> wall fire wall (if checkx1 and checkx2 true)
         CheckX2 = StartingShell[0] >= BarrierX
+        ### this condition will check if fire crosses the ground 
         CheckY1 = StartingShell[1] >= DisplayHeight - BarrierHeight
+        ### this condition will check if fire is above of y-display
         CheckY2 = StartingShell[1] <= DisplayHeight
 
+        ### if hit the barrier
         if CheckX1 and CheckX2 and CheckY1 and CheckY2:
             explosion(StartingShell[0], StartingShell[1])
             fire = False
-            
-            
+                        
         pygame.display.update()
         clock.tick(100)
 
-###power score
+###draw power score above middle of the screen
 def power(level):
     text = SmallFont.render("Power: "+str(level)+"%", True, black)
     GameDisplay.blit(text, [DisplayWidth/2, 0])
@@ -154,13 +175,18 @@ def GameLoop():
     ### Game variables
     GameExit = False
     GameOver = False
-    TankX = int(DisplayWidth*0.9)
+    
+    TankX = int(DisplayWidth*0.9)            #(90%right, 90% down the screen)
     TankY = int(DisplayHeight*0.9)
+    
     TankMove = 0
+    
     TurrepPos = 0
     CurrentTurrep = 0
+    
     FirePower = 50
     ChangePower = 0
+    
     BarrierWidth = 50
     BarrierX = (DisplayWidth / 2) + random.randint(-0.2 * DisplayWidth, 0.2 * DisplayWidth)
     BarrierHeight = random.randrange(DisplayHeight * 0.1, DisplayHeight * 0.6)
@@ -191,7 +217,7 @@ def GameLoop():
             if event.type == pygame.QUIT:
                 GameExit = True
 
-            ### if an arrow key is pressed
+            ### if an key is pressed
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     TankMove = -5
@@ -210,6 +236,8 @@ def GameLoop():
                     ChangePower = -1
                 elif event.key == pygame.K_SPACE:
                     fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower, BarrierX, BarrierHeight, BarrierWidth)
+
+            ### if key is unpressed        
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     TankMove = 0
@@ -219,9 +247,7 @@ def GameLoop():
                     ChangePower = 0
 
 
-
         TankX += TankMove
-
         CurrentTurrep += TurrepPos
 
         ### as turreplist only has 8 rotations
@@ -235,15 +261,15 @@ def GameLoop():
             TankX += 5
 
         GameDisplay.fill(white)
+
         Gunpos = tank(TankX, TankY, CurrentTurrep)    
+
         FirePower += ChangePower
         power(FirePower)
 
         barrier(BarrierX, BarrierHeight, BarrierWidth)
-
-
-
-
+        ###fill the green ground
+        GameDisplay.fill(green, rect = [0, DisplayHeight-GroundHeight, DisplayWidth, GroundHeight])
 
         ### will update the whole display screen
         pygame.display.update()
@@ -256,11 +282,6 @@ def GameLoop():
 
     ### quitting from program
     quit()
-
-
-
-
-
 
 
 
