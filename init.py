@@ -55,7 +55,7 @@ def barrier(BarrierX, BarrierHeight, BarrierWidth):
 
     pygame.draw.rect(GameDisplay, black, [BarrierX, DisplayHeight-BarrierHeight, BarrierWidth, BarrierHeight])
 
-def explosion(x, y):
+def explosion(x, y, size = 50):
     explode = True
 
     while explode:
@@ -66,7 +66,7 @@ def explosion(x, y):
         StartPoint = x, y
         ColorChoices = [yellow, green, light_green, red, light_red]
         magnitude = 1
-        while magnitude < 50:
+        while magnitude < size:
             ExplodingBlitX = x + random.randrange(-1*magnitude, magnitude)
             ExplodingBlitY = y + random.randrange(-1*magnitude, magnitude)
             pygame.draw.circle(GameDisplay, ColorChoices[random.randrange(0,5)], (ExplodingBlitX, ExplodingBlitY),random.randrange(1,5))
@@ -107,7 +107,7 @@ def tank(x, y, TurrepPos):
     return TurrepList[TurrepPos]
     
 ###firing
-def fireshell(xy, TankX, TankY, CurrentPos, GunPower):
+def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth):
     fire = True
     StartingShell = list(xy)
 
@@ -117,7 +117,6 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower):
                 pygame.quit()
                 quit()
 
-        print(StartingShell[0], StartingShell[1])
         pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
 
         ### equation to find y and x moving co-ordinate of firing
@@ -130,6 +129,17 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower):
             HitY = int(DisplayHeight)
             explosion(HitX, HitY)
             fire = False
+
+        CheckX1 = StartingShell[0] <= BarrierX + BarrierWidth
+        CheckX2 = StartingShell[0] >= BarrierX
+        CheckY1 = StartingShell[1] >= DisplayHeight - BarrierHeight
+        CheckY2 = StartingShell[1] <= DisplayHeight
+
+        if CheckX1 and CheckX2 and CheckY1 and CheckY2:
+            explosion(StartingShell[0], StartingShell[1])
+            fire = False
+            
+            
         pygame.display.update()
         clock.tick(100)
 
@@ -156,8 +166,7 @@ def GameLoop():
     BarrierHeight = random.randrange(DisplayHeight * 0.1, DisplayHeight * 0.6)
 
     while not GameExit:
-        GameDisplay.fill(white)
-        Gunpos = tank(TankX, TankY, CurrentTurrep)
+        
         if GameOver == True:
             message_to_screen("Game Over", red, -50,
                               FontSize="large")  ### -50 is telling y-displacement from the centre of text
@@ -200,7 +209,7 @@ def GameLoop():
                 elif event.key == pygame.K_d:
                     ChangePower = -1
                 elif event.key == pygame.K_SPACE:
-                    fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower)
+                    fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower, BarrierX, BarrierHeight, BarrierWidth)
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     TankMove = 0
@@ -224,6 +233,9 @@ def GameLoop():
         ### if this is the case then from upper side tank will move 5 unit left and from this case it will move 5 unit right, means cancel out (tank will look stable) 
         if TankX - (TankWidth/2) < BarrierX + BarrierWidth:
             TankX += 5
+
+        GameDisplay.fill(white)
+        Gunpos = tank(TankX, TankY, CurrentTurrep)    
         FirePower += ChangePower
         power(FirePower)
 
