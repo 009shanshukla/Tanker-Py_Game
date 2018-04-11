@@ -83,10 +83,8 @@ def explosion(x, y, size = 50):
             clock.tick(100)
 
         explode = False
-        
 
-
-### drawing tank
+###Main tank
 def tank(x, y, TurrepPos):
 
     ### 1st co-ordinate of turrep point (2nd will be (x, y)(tank upper circle)) and for rotation there will be 9 co-ordinates are available
@@ -118,10 +116,42 @@ def tank(x, y, TurrepPos):
     pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
 
     return TurrepList[TurrepPos]
+        
+###enemy tank
+def EnemyTank(x, y, TurrepPos):
 
+    ### 1st co-ordinate of turrep point (2nd will be (x, y)(tank upper circle)) and for rotation there will be 9 co-ordinates are available
+    TurrepList = [
+        (x + 27, y - 2),
+        (x + 26, y - 5),
+        (x + 25, y - 8),
+        (x + 23, y - 12),
+        (x + 20, y - 14),
+        (x + 18, y - 15),
+        (x + 15, y - 17),
+        (x + 13, y - 19),
+        (x + 11, y - 21)
+    ]
+    ### draw upper circle of tank
+    pygame.draw.circle(GameDisplay, black, (x, y), int(TankHeight/2))
+    ### draw rectangle of tank
+    pygame.draw.rect(GameDisplay, black, (x-TankHeight, y, TankWidth, TankHeight))
+    ### draw turrep of tank
+    pygame.draw.line(GameDisplay, black, (x, y), TurrepList[TurrepPos], TurretWidth)
+    ### draw 8 wheels of tank
+    pygame.draw.circle(GameDisplay, black, (x-15, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x-10, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x-5, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+5, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+10, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
+    pygame.draw.circle(GameDisplay, black, (x+15, y+20), WheelWidth)
+
+    return TurrepList[TurrepPos]
 
     
-###firing
+###main tank firing
 def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth):
     fire = True
     StartingShell = list(xy)
@@ -136,7 +166,7 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, B
         ###drawing fire 
         pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
 
-        ### equation to find y and x moving co-ordinate of firing
+        ### equation to find y and x moving co-ordinate of firing        
         StartingShell[0] -= (12 - CurrentPos)*2
         StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(GunPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
 
@@ -164,6 +194,106 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, B
         pygame.display.update()
         clock.tick(100)
 
+###enemy tank firing
+def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth, PTankX, PTankY):
+
+    PowerFound = False
+    CurrentPower = 1
+
+    ### getting power which will hit the player, from brute force 
+    while not PowerFound:
+        CurrentPower += 1
+        if CurrentPower > 100:
+            PowerFound = True
+
+        fire = True
+        StartingShell = list(xy)
+
+        ### keep firing until not hit something     
+        while fire:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+
+            ###drawing fire 
+            #pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
+
+            ### equation to find y and x moving co-ordinate of firing
+            StartingShell[0] += (12 - CurrentPos)*2
+
+            StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(CurrentPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
+
+            ### if fire hit the ground 
+            if StartingShell[1] > DisplayHeight-GroundHeight:
+                HitX = int((StartingShell[0]*DisplayHeight-GroundHeight)/StartingShell[1])
+                HitY = int(DisplayHeight-GroundHeight)
+                #explosion(HitX, HitY)
+                if PTankX + 15 > HitX > PTankX - 15:
+                    print("target acquired!!")
+                    PowerFound = True
+                fire = False
+
+            ### this condition will check if fire crosses the right of barrier
+            CheckX1 = StartingShell[0] <= BarrierX + BarrierWidth
+            ### this condition will check if fire is behind left of barrier          -> wall fire wall (if checkx1 and checkx2 true)
+            CheckX2 = StartingShell[0] >= BarrierX
+            ### this condition will check if fire crosses the ground 
+            CheckY1 = StartingShell[1] >= DisplayHeight - BarrierHeight
+            ### this condition will check if fire is above of y-display
+            CheckY2 = StartingShell[1] <= DisplayHeight
+
+            ### if hit the barrier
+            if CheckX1 and CheckX2 and CheckY1 and CheckY2:
+                #explosion(StartingShell[0], StartingShell[1])
+                fire = False
+                            
+    
+    fire = True
+    StartingShell = list(xy)
+
+    ### keep firing until not hit something     
+    while fire:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+        ###drawing fire 
+        pygame.draw.circle(GameDisplay, red, (StartingShell[0], StartingShell[1]), 5)
+
+        ### equation to find y and x moving co-ordinate of firing
+        StartingShell[0] += (12 - CurrentPos)*2
+
+        StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(CurrentPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
+
+        ### if fire hit the ground 
+        if StartingShell[1] > DisplayHeight-GroundHeight:
+            HitX = int((StartingShell[0]*DisplayHeight-GroundHeight)/StartingShell[1])
+            HitY = int(DisplayHeight-GroundHeight)
+            explosion(HitX, HitY)
+            fire = False
+
+        ### this condition will check if fire crosses the right of barrier
+        CheckX1 = StartingShell[0] <= BarrierX + BarrierWidth
+        ### this condition will check if fire is behind left of barrier          -> wall fire wall (if checkx1 and checkx2 true)
+        CheckX2 = StartingShell[0] >= BarrierX
+        ### this condition will check if fire crosses the ground 
+        CheckY1 = StartingShell[1] >= DisplayHeight - BarrierHeight
+        ### this condition will check if fire is above of y-display
+        CheckY2 = StartingShell[1] <= DisplayHeight
+
+        ### if hit the barrier
+        if CheckX1 and CheckX2 and CheckY1 and CheckY2:
+            explosion(StartingShell[0], StartingShell[1])
+            fire = False
+                        
+        pygame.display.update()
+        clock.tick(100)
+
+
+
+
 ###draw power score above middle of the screen
 def power(level):
     text = SmallFont.render("Power: "+str(level)+"%", True, black)
@@ -175,11 +305,15 @@ def GameLoop():
     ### Game variables
     GameExit = False
     GameOver = False
-    
+
+    ###main tank
     TankX = int(DisplayWidth*0.9)            #(90%right, 90% down the screen)
-    TankY = int(DisplayHeight*0.9)
-    
+    TankY = int(DisplayHeight*0.9)    
     TankMove = 0
+
+    ###enemy tank
+    EnemyTankX = int(DisplayWidth*0.1)
+    EnemyTankY = int(DisplayHeight*0.9)
     
     TurrepPos = 0
     CurrentTurrep = 0
@@ -236,6 +370,7 @@ def GameLoop():
                     ChangePower = -1
                 elif event.key == pygame.K_SPACE:
                     fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower, BarrierX, BarrierHeight, BarrierWidth)
+                    Efireshell(EnemyGunPos, EnemyTankX, EnemyTankY, 8, 50, BarrierX, BarrierHeight, BarrierWidth, TankX, TankY)
 
             ### if key is unpressed        
             elif event.type == pygame.KEYUP:
@@ -262,7 +397,8 @@ def GameLoop():
 
         GameDisplay.fill(white)
 
-        Gunpos = tank(TankX, TankY, CurrentTurrep)    
+        Gunpos = tank(TankX, TankY, CurrentTurrep)
+        EnemyGunPos = EnemyTank(EnemyTankX, EnemyTankY, 8)
 
         FirePower += ChangePower
         power(FirePower)
