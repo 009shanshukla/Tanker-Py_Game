@@ -543,7 +543,8 @@ def GameControl():
 		message_to_screen("Fire: Spacebar ", black, -60)
 		message_to_screen("Move Tanker: left, right  ", black, -20)
 		message_to_screen("Move Turret: up, down", black, 20)
-		message_to_screen("pause: press p", blue, 60)
+		message_to_screen("Change Power: Press a to add, d to decrease", black, 60)
+		message_to_screen("pause: press p", blue, 90)
 
 		button("Play", 150, 500, 100, 50, green, light_green, action= "play")
 		#button("Controls", 350, 500, 100, 50, yellow, light_yellow, action= "controls")
