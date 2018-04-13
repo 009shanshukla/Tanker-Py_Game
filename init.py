@@ -3,6 +3,12 @@ import random
 ### will initialize the screen 
 pygame.init()
 
+### loading sounds
+FireSound = pygame.mixer.Sound("fire.wav")
+BombSound = pygame.mixer.Sound("bomb.wav")
+pygame.mixer.music.load("game.wav")
+pygame.mixer.music.play(-1)           ##-1 is for infinite loop of sound 
+
 ### color format (R, G, B)
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -34,13 +40,10 @@ GameDisplay = pygame.display.set_mode((DisplayWidth, DisplayHeight))
 ### giving title to the scree
 pygame.display.set_caption('Tanker')
 
-### load image of icon, sanke head and apple
+### load image of icon
 #icon = pygame.image.load('apple1.jpg')
 #pygame.display.set_icon(icon)
 
-#img = pygame.image.load('snakeHead.jpg')
-#appleimg = pygame.image.load('apple1.jpg')
-#snakebody = pygame.image.load('Body.jpg')
 
 ### clock object initialization
 clock = pygame.time.Clock()
@@ -58,6 +61,8 @@ def barrier(BarrierX, BarrierHeight, BarrierWidth):
 
 ###defing explosion when hit something
 def explosion(x, y, size = 50):
+
+    pygame.mixer.Sound.play(BombSound)
     explode = True
 
     while explode:
@@ -152,9 +157,12 @@ def EnemyTank(x, y, TurrepPos):
 
     
 ###main tank firing
-def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth):
+def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth, EnemyTankX, EnemyTankY):
+
+    pygame.mixer.Sound.play(FireSound)
     fire = True
     StartingShell = list(xy)
+    damage = 0
 
     ### keep firing until not hit something     
     while fire:
@@ -175,6 +183,16 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, B
             HitX = int((StartingShell[0]*DisplayHeight-GroundHeight)/StartingShell[1])
             HitY = int(DisplayHeight-GroundHeight)
             explosion(HitX, HitY)
+            
+            if EnemyTankX + 10 > HitX > EnemyTankX - 10:
+                damage = 25
+            elif EnemyTankX + 15 > HitX > EnemyTankX - 15:
+                damage = 18
+            elif EnemyTankX + 25 > HitX > EnemyTankX - 25:
+                damage = 10
+            elif EnemyTankX + 35 > HitX > EnemyTankX - 35:
+                damage = 5
+            
             fire = False
 
         ### this condition will check if fire crosses the right of barrier
@@ -193,12 +211,15 @@ def fireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, B
                         
         pygame.display.update()
         clock.tick(100)
+    return damage
 
 ###enemy tank firing
 def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, BarrierWidth, PTankX, PTankY):
 
+    pygame.mixer.Sound.play(FireSound)
     PowerFound = False
     CurrentPower = 1
+    damage = 0
 
     ### getting power which will hit the player, from brute force 
     while not PowerFound:
@@ -230,8 +251,8 @@ def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, 
                 HitY = int(DisplayHeight-GroundHeight)
                 #explosion(HitX, HitY)
                 if PTankX + 15 > HitX > PTankX - 15:
-                    print("target acquired!!")
                     PowerFound = True
+                
                 fire = False
 
             ### this condition will check if fire crosses the right of barrier
@@ -265,12 +286,23 @@ def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, 
         ### equation to find y and x moving co-ordinate of firing
         StartingShell[0] += (12 - CurrentPos)*2
 
-        StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(CurrentPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
+        GunPower = random.randrange(int(CurrentPower*0.90), int(CurrentPower*1.10))
+
+        StartingShell[1] += int((((StartingShell[0]-xy[0])*0.015/(GunPower/50))**2) -(CurrentPos + CurrentPos/(12-CurrentPos)))
 
         ### if fire hit the ground 
         if StartingShell[1] > DisplayHeight-GroundHeight:
             HitX = int((StartingShell[0]*DisplayHeight-GroundHeight)/StartingShell[1])
             HitY = int(DisplayHeight-GroundHeight)
+            if PTankX + 10 > HitX > PTankX - 10:
+                damage = 25
+            elif PTankX + 15 > HitX > PTankX - 15:
+                damage = 18
+            elif PTankX + 25 > HitX > PTankX - 25:
+                damage = 10
+            elif PTankX + 35 > HitX > PTankX - 35:
+                damage = 5
+            
             explosion(HitX, HitY)
             fire = False
 
@@ -291,6 +323,8 @@ def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, 
         pygame.display.update()
         clock.tick(100)
 
+    return damage
+
 
 
 
@@ -298,6 +332,26 @@ def Efireshell(xy, TankX, TankY, CurrentPos, GunPower, BarrierX, BarrierHeight, 
 def power(level):
     text = SmallFont.render("Power: "+str(level)+"%", True, black)
     GameDisplay.blit(text, [DisplayWidth/2, 0])
+
+
+def HealthBars(PlayerHealth, EnemyHealth):
+    
+    if PlayerHealth > 75:
+        PlayerHealthColor = green
+    elif PlayerHealth > 50:
+        PlayerHealthColor = yellow
+    else:
+        PlayerHealthColor = red
+
+    if EnemyHealth > 75:
+        EnemyHealthColor = green
+    elif EnemyHealth > 50:
+        EnemyHealthColor = yellow
+    else:
+        EnemyHealthColor = red
+
+    pygame.draw.rect(GameDisplay, EnemyHealthColor, (20, 25, EnemyHealth, 25))
+    pygame.draw.rect(GameDisplay, PlayerHealthColor, (680, 25, PlayerHealth, 25))
 
 
 ### looping all events
@@ -310,10 +364,14 @@ def GameLoop():
     TankX = int(DisplayWidth*0.9)            #(90%right, 90% down the screen)
     TankY = int(DisplayHeight*0.9)    
     TankMove = 0
+    PlayerHealth = 100
+    damage = 0
 
     ###enemy tank
     EnemyTankX = int(DisplayWidth*0.1)
     EnemyTankY = int(DisplayHeight*0.9)
+    EnemyHealth = 100
+    EnemyDamage = 0
     
     TurrepPos = 0
     CurrentTurrep = 0
@@ -322,7 +380,7 @@ def GameLoop():
     ChangePower = 0
     
     BarrierWidth = 50
-    BarrierX = (DisplayWidth / 2) + random.randint(-0.2 * DisplayWidth, 0.2 * DisplayWidth)
+    BarrierX = (DisplayWidth / 2) + random.randint(-0.1 * DisplayWidth, 0.1 * DisplayWidth)
     BarrierHeight = random.randrange(DisplayHeight * 0.1, DisplayHeight * 0.6)
 
     while not GameExit:
@@ -369,8 +427,42 @@ def GameLoop():
                 elif event.key == pygame.K_d:
                     ChangePower = -1
                 elif event.key == pygame.K_SPACE:
-                    fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower, BarrierX, BarrierHeight, BarrierWidth)
-                    Efireshell(EnemyGunPos, EnemyTankX, EnemyTankY, 8, 50, BarrierX, BarrierHeight, BarrierWidth, TankX, TankY)
+                    EnemyDamage = fireshell(Gunpos, TankX, TankY, CurrentTurrep, FirePower, BarrierX, BarrierHeight, BarrierWidth, EnemyTankX, EnemyTankY)
+                    damage = Efireshell(EnemyGunPos, EnemyTankX, EnemyTankY, 8, 50, BarrierX, BarrierHeight, BarrierWidth, TankX, TankY)
+                    PlayerHealth -= damage
+                    EnemyHealth -= EnemyDamage
+
+                    PossibleMovements = ['r', 'f']
+                    MoveIndex = random.randrange(0, 2)
+
+                    for x in range(random.randrange(0, 10)):
+                        if DisplayWidth * 0.3 > EnemyTankX > DisplayWidth * 0.03:
+                            if PossibleMovements[MoveIndex] == 'r':
+                                EnemyTankX += 5
+                            if PossibleMovements[MoveIndex] == 'l':
+                                EnemyTankX -= 5
+
+                            GameDisplay.fill(white)
+
+                            HealthBars(PlayerHealth, EnemyHealth)
+                            Gunpos = tank(TankX, TankY, CurrentTurrep)
+                            EnemyGunPos = EnemyTank(EnemyTankX, EnemyTankY, 8)
+
+                            FirePower += ChangePower
+                            power(FirePower)
+
+                            barrier(BarrierX, BarrierHeight, BarrierWidth)
+                            ###fill the green ground
+                            GameDisplay.fill(green, rect = [0, DisplayHeight-GroundHeight, DisplayWidth, GroundHeight])
+
+                            ### will update the whole display screen
+                            pygame.display.update()
+
+                            clock.tick(FPS)
+
+                            
+                        
+
 
             ### if key is unpressed        
             elif event.type == pygame.KEYUP:
@@ -397,10 +489,15 @@ def GameLoop():
 
         GameDisplay.fill(white)
 
+        HealthBars(PlayerHealth, EnemyHealth)
         Gunpos = tank(TankX, TankY, CurrentTurrep)
         EnemyGunPos = EnemyTank(EnemyTankX, EnemyTankY, 8)
 
         FirePower += ChangePower
+        if FirePower > 100:
+            FirePower = 100
+        elif FirePower < 0:
+            FirePower = 0
         power(FirePower)
 
         barrier(BarrierX, BarrierHeight, BarrierWidth)
@@ -409,6 +506,13 @@ def GameLoop():
 
         ### will update the whole display screen
         pygame.display.update()
+        
+        if PlayerHealth <= 0:
+            GameOverScreen()
+
+        if EnemyHealth <= 0:
+            YouWinScreen()
+            
 
         ### give freeze time frame per seconds
         clock.tick(FPS)
@@ -418,6 +522,7 @@ def GameLoop():
 
     ### quitting from program
     quit()
+
 
 
 
@@ -514,7 +619,65 @@ def pause():
 		pygame.display.update()					
 
 
-### opening screen of game
+### game over screen of game
+def GameOverScreen():
+	over = True
+
+	while over:
+
+		### events(Press c to enter or q to exit) and direct exit x
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_q:
+					pygame.quit()
+					quit()
+				if event.key == pygame.K_c:
+					over = False
+
+		GameDisplay.fill(white)
+		message_to_screen("You Died!!", red, -100, "medium")
+		message_to_screen("Game Over ", black, -60)
+		# message_to_screen("Press c to enter, Press p to pause or q to exit", blue, 100)
+
+		button("Play Again", 150, 500, 150, 50, green, light_green, action= "play")
+		button("Controls", 350, 500, 100, 50, yellow, light_yellow, action= "controls")
+		button("Quit", 550, 500, 100, 50, red, light_red, action= "quit")
+		pygame.display.update()
+		clock.tick(15)
+
+### You Win screen of game
+def YouWinScreen():
+	win = True
+
+	while win:
+
+		### events(Press c to enter or q to exit) and direct exit x
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_q:
+					pygame.quit()
+					quit()
+				if event.key == pygame.K_c:
+					win = False
+
+		GameDisplay.fill(white)
+		message_to_screen("You Win!!", red, -100, "medium")
+		message_to_screen("Congratulations ", black, -60)
+		# message_to_screen("Press c to enter, Press p to pause or q to exit", blue, 100)
+
+		button("Play Again", 150, 500, 150, 50, green, light_green, action= "play")
+		button("Controls", 350, 500, 100, 50, yellow, light_yellow, action= "controls")
+		button("Quit", 550, 500, 100, 50, red, light_red, action= "quit")
+		pygame.display.update()
+		clock.tick(15)
+
+### Win screen of game
 def GameIntro():
 	intro = True
 
@@ -544,7 +707,6 @@ def GameIntro():
 		button("Quit", 550, 500, 100, 50, red, light_red, action= "quit")
 		pygame.display.update()
 		clock.tick(15)
-
 
 GameIntro()
 GameLoop()
